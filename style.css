@@ -170,6 +170,59 @@ h1 {
 .btn-yes { background: var(--ink); color: var(--bg); }
 .btn-no  { background: var(--bg);  color: var(--ink); }
 
+/* ---------- after "yes": photo + speech bubble ---------- */
+.reply {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;                   /* room for the bubble's tail */
+}
+.reply[hidden] { display: none; }
+
+.bubble {
+  position: relative;
+  max-width: 16ch;
+  padding: 10px 18px;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 600;
+  line-height: 1.3;
+  background: var(--paper);
+  border: var(--border);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+/* tail pointing down at the photo: black outline triangle + paper triangle on top */
+.bubble::before,
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border-style: solid;
+  border-color: transparent;
+}
+.bubble::before {
+  margin-left: -14px;
+  border-width: 16px 14px 0;
+  border-top-color: var(--ink);
+}
+.bubble::after {
+  margin-left: -9px;
+  margin-top: -1px;
+  border-width: 11px 9px 0;
+  border-top-color: var(--paper);
+}
+
+.me {
+  width: min(42vw, 170px);
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: 50% 40%;
+  border: var(--border);
+  box-shadow: 4px 4px 0 var(--ink);
+  transform: rotate(2deg);
+}
+
 /* ---------- intro: tap to open ---------- */
 .intro {
   position: fixed;
@@ -200,36 +253,29 @@ h1 {
   image-rendering: pixelated;
 }
 
-/* ---------- music ---------- */
-.sound-toggle {
+/* ---------- corner buttons: restart (left) + music (right) ---------- */
+.icon-btn {
   position: fixed;
   top: 16px;
-  right: 16px;
   z-index: 6;                  /* above the confetti */
   width: 48px;
   height: 48px;
+  font: inherit;
   font-size: 1.3rem;
+  line-height: 1;
+  color: var(--ink);
   background: var(--paper);
   border: var(--border);
   box-shadow: 3px 3px 0 var(--ink);
   cursor: pointer;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.sound-toggle[hidden] { display: none; }
-.sound-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.icon-btn[hidden] { display: none; }
+.icon-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 
-/* the YouTube player is invisible but still on the page so it can play */
-.song-player {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 200px;
-  height: 200px;
-  opacity: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-.song-player iframe { width: 100%; height: 100%; }
+.restart      { left: 16px; font-size: 1.6rem; font-weight: 600; }
+.sound-toggle { right: 16px; }
 
 /* ---------- spawned middle fingers ---------- */
 .finger {

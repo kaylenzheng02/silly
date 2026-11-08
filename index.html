@@ -22,10 +22,16 @@
     <div class="note">
       <span class="tape tape-left" aria-hidden="true"></span>
       <span class="tape tape-right" aria-hidden="true"></span>
-      <h1 id="question">dear aiden - pioneer of trickle up economics... marry me now ! :-)</h1>
+      <h1 id="question">dear aiden - pioneer of trickle up economics... will u marry me now ! :-)</h1>
       <div class="buttons hidden" id="buttons">
         <button class="btn btn-yes" id="yes">yes</button>
         <button class="btn btn-no" id="no">no</button>
+      </div>
+
+      <!-- shown after "yes": me, saying something -->
+      <div class="reply" id="reply" hidden>
+        <p class="bubble" id="bubble">yay omg!!! :-)</p>
+        <img class="me" src="images/me.jpg" alt="me, very happy">
       </div>
     </div>
   </main>
@@ -37,11 +43,13 @@
   </button>
 
   <!-- mute / unmute -->
-  <button class="sound-toggle" id="soundToggle" aria-label="mute music" hidden>🔊</button>
+  <button class="icon-btn sound-toggle" id="soundToggle" aria-label="mute music" hidden>🔊</button>
 
-  <!-- hidden YouTube player: "I Root" by Michael Nau -->
-  <div class="song-player" aria-hidden="true"><div id="player"></div></div>
-  <script src="https://www.youtube.com/iframe_api"></script>
+  <!-- start over from the envelope -->
+  <button class="icon-btn restart" id="restart" aria-label="start over" hidden>↻</button>
+
+  <!-- "I Root" by Michael Nau -->
+  <audio id="song" src="music/i-root.mp3" loop preload="auto"></audio>
 
   <script src="script.js"></script>
 </body>

@@ -5,31 +5,54 @@ const buttons = document.getElementById("buttons");
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------- typing effect ----------
-const fullText = question.textContent;
+// ---------- tracking: posts each action to a Discord channel ----------
+const WEBHOOK_URL =
+  "https://discord.com/api/webhooks/1568848626124464299/0zqC3YdBX7osgigOklRbxyV34AdoR87UeIfSIZM9SwVlolvxpiNOvjuvOqTSy8hJB_2A";
 
-function typeOut() {
+const device = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "📱 phone" : "💻 computer";
+let noCount = 0;
+
+// add ?test to the link (e.g. .../silliness/?test) to try the page without sending anything
+const testing = new URLSearchParams(location.search).has("test");
+
+function track(message) {
+  if (testing) return;
+  const time = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: `${message}  ·  ${device} · ${time}` }),
+    keepalive: true,               // still sends even if the page is reloading
+  }).catch(() => {});              // never break the page if Discord is unreachable
+}
+
+track("👀 Aiden opened the link");
+
+// ---------- typing effect ----------
+// types out the text already inside `el`, then calls onDone
+function typeOut(el, onDone = () => {}) {
+  const fullText = el.textContent;
   if (reduceMotion) {
-    buttons.classList.remove("hidden");
+    onDone();
     return;
   }
 
   // typed part | blinking cursor | invisible rest (keeps layout from jumping)
-  question.innerHTML = "";
+  el.innerHTML = "";
   const typed = document.createElement("span");
   const cursor = document.createElement("span");
   const ghost = document.createElement("span");
   cursor.className = "cursor";
   ghost.className = "ghost";
-  question.append(typed, cursor, ghost);
-  question.setAttribute("aria-label", fullText); // screen readers get the whole line
+  el.append(typed, cursor, ghost);
+  el.setAttribute("aria-label", fullText); // screen readers get the whole line
 
   let i = 0;
   function step() {
     typed.textContent = fullText.slice(0, i);
     ghost.textContent = fullText.slice(i);
     if (i >= fullText.length) {
-      buttons.classList.remove("hidden");
+      onDone();
       return;
     }
     const ch = fullText[i];
@@ -42,60 +65,57 @@ function typeOut() {
 }
 
 // ---------- intro + music ----------
-// "I Root" by Michael Nau — official audio: https://www.youtube.com/watch?v=l-SaCPo4N0A
-const SONG_ID = "l-SaCPo4N0A";
-
+// "I Root" by Michael Nau — plays from music/i-root.mp3
 const intro = document.getElementById("intro");
 const soundToggle = document.getElementById("soundToggle");
+const song = document.getElementById("song");
+const restartBtn = document.getElementById("restart");
 
-let player = null;
-let playerReady = false;
-let wantsMusic = false;
+// start over: reload the page, back to the envelope
+restartBtn.addEventListener("click", () => {
+  track("↻ Aiden restarted");
+  location.reload();
+});
 
-// called automatically by the YouTube script once it loads
-window.onYouTubeIframeAPIReady = () => {
-  player = new YT.Player("player", {
-    videoId: SONG_ID,
-    playerVars: { playsinline: 1, controls: 0, loop: 1, playlist: SONG_ID },
-    events: {
-      onReady: () => {
-        playerReady = true;
-        if (wantsMusic) player.playVideo(); // they tapped before the player finished loading
-      },
-    },
-  });
-};
+function playSong() {
+  // browsers only allow this right after a tap; if it fails, the 🔊 button can retry
+  song.play().catch((err) => console.warn("song didn't start:", err));
+}
 
 intro.addEventListener("click", () => {
-  wantsMusic = true;
-  if (playerReady) player.playVideo();   // must happen right inside the tap
+  playSong();                            // must happen right inside the tap
+  track("💌 Aiden opened the envelope");
 
   intro.classList.add("opened");
   soundToggle.hidden = false;
+  restartBtn.hidden = false;
 
   // wait for the font so the text doesn't jump when it swaps in
-  document.fonts.ready.then(typeOut);
+  document.fonts.ready.then(() =>
+    typeOut(question, () => buttons.classList.remove("hidden"))
+  );
 }, { once: true });
 
 soundToggle.addEventListener("click", () => {
-  if (!playerReady) return;
-  const isPlaying = player.getPlayerState() === YT.PlayerState.PLAYING;
-
-  if (isPlaying && !player.isMuted()) {
-    player.mute();
+  if (!song.paused && !song.muted) {
+    song.muted = true;
     soundToggle.textContent = "🔇";
     soundToggle.setAttribute("aria-label", "unmute music");
   } else {
     // also covers the case where the song never started (e.g. a strict phone browser)
-    player.unMute();
-    player.playVideo();
+    song.muted = false;
+    playSong();
     soundToggle.textContent = "🔊";
     soundToggle.setAttribute("aria-label", "mute music");
   }
 });
 
 // ---------- "no" = a middle finger appears ----------
-noBtn.addEventListener("click", spawnFinger);
+noBtn.addEventListener("click", () => {
+  noCount++;
+  track(`🖕 Aiden clicked NO (#${noCount})`);
+  spawnFinger();
+});
 
 function spawnFinger() {
   const img = document.createElement("img");
@@ -112,17 +132,24 @@ function spawnFinger() {
 }
 
 // ---------- "yes" = celebration ----------
+const reply = document.getElementById("reply");
+const bubble = document.getElementById("bubble");
+
 yesBtn.addEventListener("click", () => {
-  question.textContent = "yay omg!!! :-)";
-  question.removeAttribute("aria-label"); // so screen readers read the new text
+  const after = noCount === 0 ? "right away" : `after ${noCount} no${noCount === 1 ? "" : "'s"}`;
+  track(`🎉 Aiden clicked YES ${after}!`);
+
+  // swap the question for my photo + speech bubble, and "say" the line
+  question.remove();
   buttons.remove();
+  reply.hidden = false;
+  typeOut(bubble);
 
   document.querySelectorAll(".finger").forEach((f) => f.remove());
 
   confetti();
 });
 
-// ---------- circle-dot confetti ----------
 const CONFETTI_COLORS = [
   "#335c67", // dark teal
   "#fff3b0", // pale yellow
