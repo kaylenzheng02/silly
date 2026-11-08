@@ -11,16 +11,18 @@
 </head>
 <body>
   <main>
-    <div class="flower-row" id="flowers" role="img" aria-label="a row of pixel flowers">
+    <div class="flower-row" role="img" aria-label="a row of pixel flowers">
       <img class="bud" src="images/flower-bud.svg" alt="">
       <img class="tulip" src="images/flower-tulip.svg" alt="">
       <img class="daisy" src="images/flower-daisy.svg" alt="">
       <img class="tulip" src="images/flower-tulip.svg" alt="">
       <img class="bud" src="images/flower-bud.svg" alt="">
     </div>
-    <div class="note">
-      <h1 id="question">dear aiden - pioneer of trickle up economics... marry me now ! :-)</h1>
 
+    <div class="note">
+      <span class="tape tape-left" aria-hidden="true"></span>
+      <span class="tape tape-right" aria-hidden="true"></span>
+      <h1 id="question">dear aiden - pioneer of trickle up economics... marry me now ! :-)</h1>
       <div class="buttons hidden" id="buttons">
         <button class="btn btn-yes" id="yes">yes</button>
         <button class="btn btn-no" id="no">no</button>
@@ -28,6 +30,20 @@
     </div>
   </main>
 
+  <!-- intro: one tap opens the note and starts the music (browsers require a tap before sound) -->
+  <button class="intro" id="intro">
+    <img class="envelope" src="images/envelope.svg" alt="">
+    <span>tap to open</span>
+  </button>
+
+  <!-- mute / unmute -->
+  <button class="sound-toggle" id="soundToggle" aria-label="mute music" hidden>🔊</button>
+
+  <!-- hidden YouTube player: "I Root" by Michael Nau -->
+  <div class="song-player" aria-hidden="true"><div id="player"></div></div>
+  <script src="https://www.youtube.com/iframe_api"></script>
+
   <script src="script.js"></script>
 </body>
 </html>
+

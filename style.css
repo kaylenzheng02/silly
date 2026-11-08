@@ -1,13 +1,27 @@
+/* ==========================================================
+   colors — palette: coolors.co/palette/335c67-fff3b0-e09f3e-9e2a2b-540b0e
+   ========================================================== */
+:root {
+  --bg: #e9edc9;        /* sage page background (also baked into images/note-corner.svg) */
+  --ink: #111;          /* outlines, text, shadows */
+  --paper: #fffdf6;     /* the note */
+  --teal: #335c67;
+  --orange: #e09f3e;
+
+  --border: 3px solid var(--ink);
+}
+
+/* ---------- base ---------- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
-  overflow: hidden;           /* no sideways scrolling on phones */
+  overflow: hidden;            /* no scrolling, even when fingers land off-screen */
 }
 
 body {
-  background: #e9edc9;
-  color: #111;
+  background: var(--bg);
+  color: var(--ink);
   font-family: "Pixelify Sans", system-ui, sans-serif;
   display: flex;
   align-items: center;
@@ -17,6 +31,8 @@ body {
 }
 
 main {
+  position: relative;
+  z-index: 1;                  /* above the spawned middle fingers */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,53 +40,92 @@ main {
   max-width: 440px;
 }
 
-/* ---------- the paper note ---------- */
-.note {
-  width: 100%;
-  background: #fffdf6;          /* warm white paper */
-  border: 3px solid #111;
-  box-shadow: 6px 6px 0 #111;   /* same chunky pixel shadow as the buttons */
-  padding: 28px 20px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  transform: rotate(-1deg);     /* slightly tilted, like it was set down */
-}
-
 /* ---------- row of pixel flowers ---------- */
 .flower-row {
-  --px: clamp(3px, 1.4vw, 6px);   /* size of one "pixel" — all flowers share it */
+  --px: clamp(3px, 1.4vw, 6px); /* one "pixel" — all flowers share it */
+  position: relative;
+  z-index: 1;                  /* in front of the note's top border */
   display: flex;
-  align-items: flex-end;           /* stand them all on the same line */
+  align-items: flex-end;       /* all standing on the same line */
   justify-content: center;
   gap: calc(var(--px) * 3);
-  position: relative;
-  z-index: 1;
-  margin-bottom: -3px;             /* flowers stand right on the paper's top edge */
+  margin-bottom: -3px;         /* stand right on the note's top edge */
 }
 
 .flower-row img {
-  image-rendering: pixelated;
   width: auto;
+  image-rendering: pixelated;
 }
 
-/* heights match each flower's pixel grid so they're all the same scale */
+/* heights = each flower's pixel-grid height, so they're all the same scale */
 .flower-row .daisy { height: calc(var(--px) * 18); }
 .flower-row .tulip { height: calc(var(--px) * 12); }
 .flower-row .bud   { height: calc(var(--px) * 8); }
 
-
-h1 {
-  font-size: clamp(1.4rem, 6vw, 2.2rem);
-  max-width: 20ch;
-  line-height: 1.3;
+/* ---------- the paper note ---------- */
+.note {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 20px 24px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(   /* faint ruled lines */
+    to bottom,
+    transparent 0 30px,
+    rgb(51 92 103 / 0.16) 30px 32px
+  );
+  background-position: 0 12px;
+  border: var(--border);
+  box-shadow: 6px 6px 0 var(--ink);
+  transform: rotate(-1deg);    /* slightly tilted, like it was set down */
 }
 
-/* ---------- typing effect ---------- */
-.ghost { color: transparent; }          /* untyped text: invisible but holds its space */
+/* folded corner: a pixel image covering the corner and its shadow */
+.note::after {
+  content: "";
+  position: absolute;
+  right: -9px;                 /* 3px border + 6px shadow */
+  bottom: -9px;
+  width: 48px;
+  height: 48px;
+  background: url("images/note-corner.svg") no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
 
-/* the cursor takes up zero space, so the text never re-wraps while typing */
+/* washi tape on the top corners */
+.tape {
+  position: absolute;
+  top: -12px;
+  width: 72px;
+  height: 24px;
+  background: var(--orange);
+  opacity: 0.85;
+  clip-path: polygon(          /* jagged torn ends */
+    4px 0, calc(100% - 4px) 0, 100% 25%, calc(100% - 4px) 50%, 100% 75%,
+    calc(100% - 4px) 100%, 4px 100%, 0 75%, 4px 50%, 0 25%
+  );
+  pointer-events: none;
+}
+.tape-left  { left: -16px;  transform: rotate(-35deg); }
+.tape-right { right: -16px; transform: rotate(35deg); }
+
+/* ---------- the message ---------- */
+h1 {
+  font-size: clamp(1.4rem, 6vw, 2.2rem);
+  font-weight: 600;
+  line-height: 1.3;
+  max-width: 20ch;
+}
+
+/* typing effect: untyped text is invisible but still holds its space */
+.ghost { color: transparent; }
+
+/* the cursor takes up zero width, so the text never re-wraps while typing */
 .cursor { position: relative; }
 .cursor::after {
   content: "";
@@ -86,51 +141,101 @@ h1 {
 @keyframes blink { 50% { opacity: 0; } }
 
 /* ---------- buttons ---------- */
-.buttons { transition: opacity 0.4s; }
-.buttons.hidden { opacity: 0; visibility: hidden; }
 .buttons {
   display: flex;
-  gap: 20px;
   align-items: center;
   justify-content: center;
+  gap: 20px;
   min-height: 64px;
+  transition: opacity 0.4s;
 }
+.buttons.hidden { opacity: 0; visibility: hidden; }
 
 .btn {
   font: inherit;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 600;
   min-width: 96px;
   min-height: 48px;            /* easy to tap on phones */
   padding: 8px 20px;
-  border: 3px solid #111;
-  box-shadow: 4px 4px 0 #111;  /* chunky pixel-style shadow */
+  border: var(--border);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+.btn-yes { background: var(--ink); color: var(--bg); }
+.btn-no  { background: var(--bg);  color: var(--ink); }
+
+/* ---------- intro: tap to open ---------- */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.4rem;
+  font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
+  transition: opacity 0.5s, visibility 0.5s;
+}
+.intro.opened { opacity: 0; visibility: hidden; }
+
+.envelope {
+  width: min(55vw, 210px);
+  height: auto;
+  image-rendering: pixelated;
 }
 
-.btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111; }
-
-.btn-yes {
-  background: #111;
-  color: #e9edc9;
+/* ---------- music ---------- */
+.sound-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 6;                  /* above the confetti */
+  width: 48px;
+  height: 48px;
+  font-size: 1.3rem;
+  background: var(--paper);
+  border: var(--border);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
 }
+.sound-toggle[hidden] { display: none; }
+.sound-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 
-.btn-no {
-  background: #e9edc9;
-  color: #111;
+/* the YouTube player is invisible but still on the page so it can play */
+.song-player {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 200px;
+  height: 200px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
 }
-
-main { position: relative; z-index: 1; }   /* keep content above the spawned fingers */
+.song-player iframe { width: 100%; height: 100%; }
 
 /* ---------- spawned middle fingers ---------- */
 .finger {
   position: fixed;
   z-index: 0;
-  height: 90px;
-  width: auto;
+  width: auto;                 /* height is set randomly in script.js */
   image-rendering: pixelated;
   pointer-events: none;
   transform: translate(-50%, -50%) rotate(var(--tilt));
@@ -140,8 +245,8 @@ main { position: relative; z-index: 1; }   /* keep content above the spawned fin
 .confetti {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: 5;
   pointer-events: none;
 }

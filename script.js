@@ -3,11 +3,12 @@ const noBtn = document.getElementById("no");
 const question = document.getElementById("question");
 const buttons = document.getElementById("buttons");
 
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // ---------- typing effect ----------
 const fullText = question.textContent;
 
 function typeOut() {
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduceMotion) {
     buttons.classList.remove("hidden");
     return;
@@ -40,8 +41,58 @@ function typeOut() {
   setTimeout(step, 500);
 }
 
-// wait for the font to load first, so the text doesn't jump when it swaps in
-document.fonts.ready.then(typeOut);
+// ---------- intro + music ----------
+// "I Root" by Michael Nau — official audio: https://www.youtube.com/watch?v=l-SaCPo4N0A
+const SONG_ID = "l-SaCPo4N0A";
+
+const intro = document.getElementById("intro");
+const soundToggle = document.getElementById("soundToggle");
+
+let player = null;
+let playerReady = false;
+let wantsMusic = false;
+
+// called automatically by the YouTube script once it loads
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player("player", {
+    videoId: SONG_ID,
+    playerVars: { playsinline: 1, controls: 0, loop: 1, playlist: SONG_ID },
+    events: {
+      onReady: () => {
+        playerReady = true;
+        if (wantsMusic) player.playVideo(); // they tapped before the player finished loading
+      },
+    },
+  });
+};
+
+intro.addEventListener("click", () => {
+  wantsMusic = true;
+  if (playerReady) player.playVideo();   // must happen right inside the tap
+
+  intro.classList.add("opened");
+  soundToggle.hidden = false;
+
+  // wait for the font so the text doesn't jump when it swaps in
+  document.fonts.ready.then(typeOut);
+}, { once: true });
+
+soundToggle.addEventListener("click", () => {
+  if (!playerReady) return;
+  const isPlaying = player.getPlayerState() === YT.PlayerState.PLAYING;
+
+  if (isPlaying && !player.isMuted()) {
+    player.mute();
+    soundToggle.textContent = "🔇";
+    soundToggle.setAttribute("aria-label", "unmute music");
+  } else {
+    // also covers the case where the song never started (e.g. a strict phone browser)
+    player.unMute();
+    player.playVideo();
+    soundToggle.textContent = "🔊";
+    soundToggle.setAttribute("aria-label", "mute music");
+  }
+});
 
 // ---------- "no" = a middle finger appears ----------
 noBtn.addEventListener("click", spawnFinger);
@@ -63,9 +114,9 @@ function spawnFinger() {
 // ---------- "yes" = celebration ----------
 yesBtn.addEventListener("click", () => {
   question.textContent = "yay omg!!! :-)";
+  question.removeAttribute("aria-label"); // so screen readers read the new text
   buttons.remove();
 
-  // clear the fingers
   document.querySelectorAll(".finger").forEach((f) => f.remove());
 
   confetti();
@@ -81,7 +132,7 @@ const CONFETTI_COLORS = [
 ];
 
 function confetti() {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (reduceMotion) return;
 
   const canvas = document.createElement("canvas");
   canvas.className = "confetti";
@@ -96,7 +147,7 @@ function confetti() {
   const W = window.innerWidth;
   const H = window.innerHeight;
 
-  // dots start spread out above the top of the screen, at staggered heights
+  // dots start spread out above the top of the screen,  staggered heights
   const dots = [];
   for (let i = 0; i < 160; i++) {
     dots.push({
@@ -135,4 +186,3 @@ function confetti() {
   }
   requestAnimationFrame(frame);
 }
-
