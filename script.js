@@ -158,6 +158,58 @@ const CONFETTI_COLORS = [
   "#540b0e", // deep maroon
 ];
 
+// a mix of all three: dots, pixel hearts, and little swirls
+const CONFETTI_SHAPES = ["dot", "heart", "swirl"];
+
+// pixel heart, 7 wide x 6 tall (1 = filled square)
+const HEART_PIXELS = [
+  "0110110",
+  "1111111",
+  "1111111",
+  "0111110",
+  "0011100",
+  "0001000",
+];
+
+function drawPiece(ctx, d) {
+  ctx.fillStyle = d.color;
+  ctx.strokeStyle = d.color;
+
+  if (d.shape === "dot") {
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (d.shape === "heart") {
+    // chunky pixels, kept upright so it stays crisp like the flowers
+    const px = Math.max(2, Math.round(d.size * 0.6));
+    const left = Math.round(d.x - (7 * px) / 2);
+    const top = Math.round(d.y - (6 * px) / 2);
+    HEART_PIXELS.forEach((row, r) => {
+      for (let c = 0; c < row.length; c++) {
+        if (row[c] === "1") ctx.fillRect(left + c * px, top + r * px, px, px);
+      }
+    });
+  } else {
+    // swirl: a small spiral that spins as it falls
+    ctx.save();
+    ctx.translate(d.x, d.y);
+    ctx.rotate(d.spin);
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    const turns = 2.25;
+    const maxR = d.size * 1.6;
+    for (let t = 0; t <= turns * Math.PI * 2; t += 0.2) {
+      const r = (t / (turns * Math.PI * 2)) * maxR;
+      const x = Math.cos(t) * r;
+      const y = Math.sin(t) * r;
+      t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function confetti() {
   if (reduceMotion) return;
 
@@ -186,6 +238,9 @@ function confetti() {
       phase: Math.random() * Math.PI * 2,
       size: 3 + Math.random() * 5,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+      shape: CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)],
+      spin: Math.random() * Math.PI * 2,           // current rotation (swirls)
+      spinSpeed: (Math.random() - 0.5) * 0.15,     // how fast it turns
     });
   }
 
@@ -198,14 +253,10 @@ function confetti() {
       d.phase += d.swaySpeed;
       d.x += Math.sin(d.phase) * d.swayAmount; // gentle side-to-side drift
       d.y += d.speed;
+      d.spin += d.spinSpeed;
 
       alive++;
-      if (d.y > -20) {
-        ctx.fillStyle = d.color;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      if (d.y > -20) drawPiece(ctx, d);
     }
 
     if (alive > 0) requestAnimationFrame(frame);
